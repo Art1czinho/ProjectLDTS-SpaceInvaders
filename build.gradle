@@ -1,8 +1,8 @@
-plugins {
+gitplugins {
     id 'java'
 }
 
-group = 'org.example'
+group = 'com.up202404403.hero'
 version = '1.0-SNAPSHOT'
 
 repositories {
