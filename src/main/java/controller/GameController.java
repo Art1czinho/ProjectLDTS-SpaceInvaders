@@ -5,7 +5,6 @@ import com.googlecode.lanterna.input.KeyType;
 import model.Arena;
 import model.Position;
 import view.GameViewer;
-import view.GUI;
 
 import java.io.IOException;
 
@@ -19,33 +18,36 @@ public class GameController {
     }
 
     public void start() throws IOException {
-        int FPS = 20; // Frames por segundo
-        int frameTime = 1000 / FPS; // Tempo de cada frame em milissegundos
+        int FPS = 20;
+        int frameTime = 1000 / FPS;
 
         while (true) {
             long startTime = System.currentTimeMillis();
 
-            // 1. INPUT (Não bloqueante)
-            KeyStroke key = viewer.getGui().getNextAction(); // Vais ter de alterar este método na GUI!
+            // --- CICLO DE INPUT ---
+            // Lê TODAS as teclas pendentes.
+            // Se carregares em 3 teclas rápido, ele processa as 3 antes de desenhar.
+            KeyStroke key;
+            while ((key = viewer.getGui().getNextAction()) != null) {
 
-            if (key != null) {
-                if (key.getKeyType() == KeyType.Character && key.getCharacter() == 'q') {
+                // Sair do jogo ('q' ou fechar janela)
+                if ((key.getKeyType() == KeyType.Character && key.getCharacter() == 'q')
+                        || key.getKeyType() == KeyType.EOF) {
                     viewer.getGui().close();
+                    return; // <--- O SEGREDO: Encerra o método start() imediatamente
                 }
-                if (key.getKeyType() == KeyType.EOF) {
-                    break;
-                }
+
                 processKey(key);
             }
 
-            // 2. UPDATE (Física do jogo)
+            // --- UPDATE (Física) ---
             arena.moveProjectiles();
-            // futuramente: arena.moveMonsters();
+            // arena.moveMonsters(); (Fica para depois)
 
-            // 3. DRAW
+            // --- DRAW (Desenhar) ---
             viewer.draw(arena);
 
-            // 4. ESPERA (Para manter o FPS estável)
+            // --- TIMER (Sincronização) ---
             long elapsedTime = System.currentTimeMillis() - startTime;
             long sleepTime = frameTime - elapsedTime;
 
@@ -55,29 +57,29 @@ public class GameController {
                 // Ignorar interrupções
             }
         }
-        viewer.getGui().close();
     }
 
     private void processKey(KeyStroke key) {
-        // Vamos usar a lógica do Space Invaders (Esquerda/Direita)
-        // Mas podes usar Cima/Baixo se quiseres mover livremente
-
+        // Movimento (Esquerda / Direita)
         if (key.getKeyType() == KeyType.ArrowLeft) {
             moveHero(arena.getHero().moveLeft());
         }
         if (key.getKeyType() == KeyType.ArrowRight) {
             moveHero(arena.getHero().moveRight());
         }
+
+        // Movimento Vertical (com a tal barreira invisível)
         if (key.getKeyType() == KeyType.ArrowUp) {
             moveHero(arena.getHero().moveUp());
         }
         if (key.getKeyType() == KeyType.ArrowDown) {
             moveHero(arena.getHero().moveDown());
         }
+
+        // Disparar
         if (key.getKeyType() == KeyType.Character && key.getCharacter() == ' ') {
             arena.shoot();
         }
-
     }
 
     private void moveHero(Position position) {
